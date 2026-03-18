@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { NavProvider, useNav } from './components/Context/NavigationContext'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Problem from './components/Problem'
@@ -11,14 +11,16 @@ import CompatibilityQuiz from './components/CompatibilityQuiz'
 import CTA from './components/CTA'
 import Footer from './components/Footer'
 import AdminApp from './admin/AdminApp'
+import LoginPage from './components/login'
 
-function LandingPage({ onAdmin }: { onAdmin: () => void }) {
+function LandingPage() {
+  const { setView } = useNav()
   return (
     <div className="min-h-screen font-sans">
       {/* Admin demo banner */}
       <div className="fixed bottom-4 right-4 z-50">
         <button
-          onClick={onAdmin}
+          onClick={() => setView('admin')}
           className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg hover:opacity-90 transition-all hover:shadow-xl"
           style={{ background: 'linear-gradient(135deg, #15173D, #982598)' }}
         >
@@ -40,26 +42,35 @@ function LandingPage({ onAdmin }: { onAdmin: () => void }) {
   )
 }
 
-export default function App() {
-  const [view, setView] = useState<'landing' | 'admin'>('landing')
-
-  if (view === 'admin') {
-    return (
-      <div>
-        {/* Back to landing button */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <button
-            onClick={() => setView('landing')}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg hover:opacity-90 transition-all"
-            style={{ background: '#15173D' }}
-          >
-            ← Back to Site
-          </button>
-        </div>
-        <AdminApp />
+function AdminView() {
+  const { setView } = useNav()
+  return (
+    <div>
+      <div className="fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => setView('landing')}
+          className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg hover:opacity-90 transition-all"
+          style={{ background: '#15173D' }}
+        >
+          ← Back to Site
+        </button>
       </div>
-    )
-  }
+      <AdminApp />
+    </div>
+  )
+}
 
-  return <LandingPage onAdmin={() => setView('admin')} />
+function AppRoutes() {
+  const { view } = useNav()
+  if (view === 'admin') return <AdminView />
+  if (view === 'login') return <LoginPage />
+  return <LandingPage />
+}
+
+export default function App() {
+  return (
+    <NavProvider>
+      <AppRoutes />
+    </NavProvider>
+  )
 }

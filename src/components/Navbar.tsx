@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
 import CloseIcon from '@mui/icons-material/Close'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import { useNav } from '../components/Context/NavigationContext'
 
 export default function Navbar() {
-  const [open, setOpen]       = useState(false)
+  const { setView } = useNav()
+  const [open, setOpen]         = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -46,16 +48,21 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* Desktop CTA */}
+        {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
-          <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+          <button
+            onClick={() => setView('login')}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors bg-transparent border-none cursor-pointer"
+          >
             Log In
-          </a>
-          <a href="#pricing"
+          </button>
+          <button
+            onClick={() => setView('login')}
             className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-md"
-            style={{ background: '#982598' }}>
+            style={{ background: '#982598' }}
+          >
             Start Free
-          </a>
+          </button>
         </div>
 
         {/* Mobile toggle */}
@@ -78,11 +85,13 @@ export default function Navbar() {
             </a>
           ))}
           <div className="px-6 pt-3">
-            <a href="#pricing"
-              className="block w-full py-2.5 rounded-lg text-center text-sm font-semibold text-white hover:opacity-90"
-              style={{ background: '#982598' }}>
+            <button
+              onClick={() => { setOpen(false); setView('login') }}
+              className="w-full py-2.5 rounded-lg text-center text-sm font-semibold text-white hover:opacity-90"
+              style={{ background: '#982598' }}
+            >
               Start Free
-            </a>
+            </button>
           </div>
         </div>
       )}
