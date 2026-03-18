@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNav } from '../components/Context/NavigationContext'
+import { authApi, tokenStorage, type ApiError } from '../admin/services/authService'
 
 /* ── Icons ── */
 const LogoMark = ({ size = 32 }: { size?: number }) => (
@@ -25,12 +26,15 @@ const LinkedInIcon = () => (
   </svg>
 )
 
+// ─── Types ───────────────────────────────────────────────────
 interface FormErrors {
   name?: string
   email?: string
   password?: string
+  global?: string
 }
 
+// ─── Main component ───────────────────────────────────────────
 export default function LoginPage() {
   const { setView } = useNav()
 
@@ -41,74 +45,81 @@ export default function LoginPage() {
   const [showPw, setShowPw]     = useState(false)
   const [loading, setLoading]   = useState(false)
   const [errors, setErrors]     = useState<FormErrors>({})
-  const [success, setSuccess]   = useState(false)
 
+  // ── Client-side validation ──
   const validate = (): FormErrors => {
     const e: FormErrors = {}
-    if (!email)                             e.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(email))  e.email = 'Enter a valid email'
-    if (!password)                          e.password = 'Password is required'
-    else if (password.length < 6)           e.password = 'Minimum 6 characters'
-    if (tab === 'signup' && !name.trim())   e.name = 'Full name is required'
+    if (!email)                            e.email    = 'Email is required'
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email    = 'Enter a valid email'
+    if (!password)                         e.password = 'Password is required'
+    else if (password.length < 6)          e.password = 'Minimum 6 characters'
+    if (tab === 'signup' && !name.trim())  e.name     = 'Full name is required'
     return e
   }
 
-  const handleSubmit = () => {
-    const e = validate()
-    if (Object.keys(e).length) { setErrors(e); return }
+  // ── Map backend field errors → FormErrors ──
+  const applyServerErrors = (err: ApiError) => {
+    const next: FormErrors = {}
+    if (err.errors) {
+      if (err.errors.email)    next.email    = err.errors.email[0]
+      if (err.errors.password) next.password = err.errors.password[0]
+      if (err.errors.name)     next.name     = err.errors.name[0]
+    }
+    if (!Object.keys(next).length) next.global = err.message
+    setErrors(next)
+  }
+
+  // ── Submit ──
+  const handleSubmit = async () => {
+    const clientErrors = validate()
+    if (Object.keys(clientErrors).length) { setErrors(clientErrors); return }
+
     setErrors({})
     setLoading(true)
-    setTimeout(() => { setLoading(false); setSuccess(true) }, 1400)
+
+    try {
+      const res = tab === 'login'
+        ? await authApi.login({ email, password })
+        : await authApi.register({ name, email, password })
+
+      tokenStorage.set(res.token)
+
+      if (tab === 'login') {
+        setView('admin')                         // ← go to dashboard
+      } else {
+        setTab('login')                          // ← switch to login tab
+        setName('')
+        setEmail('')
+        setPassword('')
+        setErrors({ global: '✅ Account created! Please log in.' })
+      }
+
+    } catch (err) {
+      applyServerErrors(err as ApiError)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !loading) handleSubmit()
   }
 
   const switchTab = (t: 'login' | 'signup') => { setTab(t); setErrors({}) }
 
-  /* ── Success screen ── */
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="text-center" style={{ animation: 'fadeUp 0.6s ease forwards' }}>
-          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-4xl"
-            style={{ background: 'linear-gradient(135deg, #982598, #c44ec4)' }}>
-            🎉
-          </div>
-          <h2 className="font-bold text-3xl mb-3" style={{ color: '#15173D' }}>
-            {tab === 'login' ? 'Welcome back!' : 'Account Created!'}
-          </h2>
-          <p className="text-gray-500 text-base mb-8">
-            {tab === 'login'
-              ? "You've successfully signed in to FounderMatch."
-              : "Your account is ready. Let's find your co-founder!"}
-          </p>
-          <button
-            onClick={() => setView('landing')}
-            className="px-6 py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-all"
-            style={{ background: '#982598' }}
-          >
-            Go to Dashboard →
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  /* ── Main layout ── */
   return (
     <div className="min-h-screen flex">
 
-      {/* Left branding panel */}
+      {/* ── Left branding panel ── */}
       <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-16 relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #15173D 0%, #2a2d5e 60%, #6e1a6e 100%)' }}>
 
-        {/* Decorative rings */}
         {([[-60, -60, 260], [260, 200, 180], [-40, 350, 120]] as number[][]).map(([x, y, r], i) => (
           <div key={i} className="absolute rounded-full pointer-events-none"
             style={{ left: x, top: y, width: r, height: r, border: '1px solid rgba(255,255,255,0.08)' }} />
         ))}
 
-        {/* Logo — click goes back to landing */}
-        <div className="flex items-center gap-3 cursor-pointer mb-16"
-          onClick={() => setView('landing')}>
+        <div className="flex items-center gap-3 cursor-pointer mb-16" onClick={() => setView('landing')}>
           <LogoMark size={36} />
           <span className="font-bold text-2xl" style={{ color: 'white', fontFamily: "'Syne', sans-serif" }}>
             Founder<span style={{ color: '#c44ec4' }}>Match</span>
@@ -126,8 +137,6 @@ export default function LoginPage() {
             Join 2,400+ entrepreneurs who found their perfect co-founder through
             structured compatibility testing.
           </p>
-
-          {/* Testimonial card */}
           <div className="rounded-2xl p-6"
             style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
             <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -146,12 +155,11 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* ── Right form panel ── */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
 
         {/* Mobile logo */}
-        <div className="flex lg:hidden items-center gap-2 mb-8 cursor-pointer"
-          onClick={() => setView('landing')}>
+        <div className="flex lg:hidden items-center gap-2 mb-8 cursor-pointer" onClick={() => setView('landing')}>
           <LogoMark size={28} />
           <span className="font-bold text-lg" style={{ color: '#15173D' }}>
             Founder<span style={{ color: '#982598' }}>Match</span>
@@ -186,6 +194,18 @@ export default function LoginPage() {
               : 'Start your co-founder journey for free'}
           </p>
 
+          {/* ── Global server error / success banner ── */}
+          {errors.global && (
+            <div className="flex items-start gap-2 rounded-xl px-4 py-3 mb-5 text-sm"
+              style={{
+                background: errors.global.startsWith('✅') ? '#f0fdf4' : '#fef2f2',
+                border: `1px solid ${errors.global.startsWith('✅') ? '#bbf7d0' : '#fecaca'}`,
+                color: errors.global.startsWith('✅') ? '#16a34a' : '#dc2626'
+              }}>
+              <span>{errors.global}</span>
+            </div>
+          )}
+
           {/* Social buttons */}
           <div className="flex gap-3 mb-5">
             <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all">
@@ -203,18 +223,20 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Form */}
-          <div className="flex flex-col gap-4">
+          {/* ── Form fields ── */}
+          <div className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
 
             {tab === 'signup' && (
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: '#15173D' }}>Full Name</label>
                 <input
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
+                  style={{ borderColor: errors.name ? '#f87171' : '#e5e7eb' }}
                   placeholder="e.g. Rahul Mehta"
-                  value={name} onChange={e => setName(e.target.value)}
+                  value={name}
+                  onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })) }}
                 />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-red-500 text-xs mt-1">⚠ {errors.name}</p>}
               </div>
             )}
 
@@ -222,11 +244,13 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-1.5" style={{ color: '#15173D' }}>Email Address</label>
               <input
                 type="email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
+                style={{ borderColor: errors.email ? '#f87171' : '#e5e7eb' }}
                 placeholder="you@startup.com"
-                value={email} onChange={e => setEmail(e.target.value)}
+                value={email}
+                onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: undefined, global: undefined })) }}
               />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-red-500 text-xs mt-1">⚠ {errors.email}</p>}
             </div>
 
             <div>
@@ -239,18 +263,21 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
-                  className="w-full px-4 py-3 pr-16 rounded-xl border border-gray-200 text-sm outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                  className="w-full px-4 py-3 pr-16 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
+                  style={{ borderColor: errors.password ? '#f87171' : '#e5e7eb' }}
                   placeholder={tab === 'login' ? 'Enter your password' : 'Min. 6 characters'}
-                  value={password} onChange={e => setPassword(e.target.value)}
+                  value={password}
+                  onChange={e => { setPassword(e.target.value); setErrors(p => ({ ...p, password: undefined, global: undefined })) }}
                 />
                 <button
+                  type="button"
                   onClick={() => setShowPw(!showPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
                 >
                   {showPw ? 'Hide' : 'Show'}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-red-500 text-xs mt-1">⚠ {errors.password}</p>}
             </div>
 
             {tab === 'signup' && (
@@ -263,9 +290,11 @@ export default function LoginPage() {
             )}
 
             <button
+              type="button"
               onClick={handleSubmit}
-              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-all mt-1 flex items-center justify-center gap-2"
-              style={{ background: '#982598' }}
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all mt-1 flex items-center justify-center gap-2"
+              style={{ background: '#982598', opacity: loading ? 0.8 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
             >
               {loading
                 ? <>
