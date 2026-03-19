@@ -15,6 +15,21 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn)
   }, [])
 
+  // Inject the blink keyframe once into <head> so the dot animates
+  useEffect(() => {
+    const id = 'synapse-blink-style'
+    if (document.getElementById(id)) return
+    const style = document.createElement('style')
+    style.id = id
+    style.textContent = `
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.3; }
+      }
+    `
+    document.head.appendChild(style)
+  }, [])
+
   const links = [
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'Features',     href: '#features' },
@@ -58,10 +73,7 @@ export default function Navbar() {
           >
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{
-                background: '#982598',
-                animation: 'blink 1s infinite',
-              }}
+              style={{ background: '#982598', animation: 'blink 1s infinite' }}
             />
             SYNAPSE™ Test
           </button>

@@ -12,12 +12,12 @@ import CTA from './components/CTA'
 import Footer from './components/Footer'
 import AdminApp from './admin/AdminApp'
 import LoginPage from './components/login'
+import SynapseAssessment from './components/SynapseAssement'
 
 function LandingPage() {
   const { setView } = useNav()
   return (
     <div className="min-h-screen font-sans">
-      {/* Admin demo banner */}
       <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setView('admin')}
@@ -60,10 +60,21 @@ function AdminView() {
   )
 }
 
+function AssessmentView() {
+  const { setView } = useNav()
+  return (
+    <SynapseAssessment
+      onComplete={() => setView('landing')}
+      onClose={() => setView('landing')}
+    />
+  )
+}
+
 function AppRoutes() {
   const { view } = useNav()
   if (view === 'admin') return <AdminView />
   if (view === 'login') return <LoginPage />
+  if (view === 'assessment') return <AssessmentView />
   return <LandingPage />
 }
 
