@@ -50,6 +50,22 @@ export default function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
+          {/* SYNAPSE™ pill button */}
+          <button
+            onClick={() => setView('assessment')}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90 hover:shadow-md"
+            style={{ background: '#15173D', color: '#fff' }}
+          >
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{
+                background: '#982598',
+                animation: 'blink 1s infinite',
+              }}
+            />
+            SYNAPSE™ Test
+          </button>
+
           <button
             onClick={() => setView('login')}
             className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors bg-transparent border-none cursor-pointer"
@@ -84,7 +100,19 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <div className="px-6 pt-3">
+          <div className="px-6 pt-3 flex flex-col gap-2">
+            {/* SYNAPSE™ in mobile menu */}
+            <button
+              onClick={() => { setOpen(false); setView('assessment') }}
+              className="w-full py-2.5 rounded-lg text-center text-sm font-semibold flex items-center justify-center gap-2"
+              style={{ background: '#15173D', color: '#fff' }}
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: '#982598', animation: 'blink 1s infinite' }}
+              />
+              SYNAPSE™ Test
+            </button>
             <button
               onClick={() => { setOpen(false); setView('login') }}
               className="w-full py-2.5 rounded-lg text-center text-sm font-semibold text-white hover:opacity-90"
