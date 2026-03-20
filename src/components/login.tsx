@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { useNav } from '../components/Context/NavigationContext'
-import { authApi, tokenStorage, type ApiError } from '../admin/services/authService'
+import { authApi, tokenStorage } from '../admin/services/authService'
 
 /* ── Icons ── */
-const LogoMark = ({ size = 32 }: { size?: number }) => (
+const LogoMark = ({ size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="10" fill="#982598" />
+    <rect width="32" height="32" rx="10" fill="url(#lm-grad)" />
+    <defs>
+      <linearGradient id="lm-grad" x1="0" y1="0" x2="32" y2="32">
+        <stop offset="0%" stopColor="#0f0826" />
+        <stop offset="100%" stopColor="#3b1d78" />
+      </linearGradient>
+    </defs>
     <path d="M8 16 Q12 10 16 14 Q20 18 24 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-    <circle cx="16" cy="22" r="2.5" fill="white" opacity="0.7" />
+    <circle cx="16" cy="22" r="2.5" fill="white" opacity="0.6" />
   </svg>
 )
 
@@ -26,29 +32,153 @@ const LinkedInIcon = () => (
   </svg>
 )
 
-// ─── Types ───────────────────────────────────────────────────
-interface FormErrors {
-  name?: string
-  email?: string
-  password?: string
-  global?: string
-}
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&display=swap');
 
-// ─── Main component ───────────────────────────────────────────
+  .lp-root * { font-family:'Cabinet Grotesk',sans-serif; box-sizing:border-box; }
+
+  @keyframes lp-shimmer  { 0%{background-position:-200% center} 100%{background-position:200% center} }
+  @keyframes lp-gradShift{ 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  @keyframes lp-float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes lp-spin     { to{transform:rotate(360deg)} }
+  @keyframes lp-fadeIn   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes lp-grain {
+    0%,100%{transform:translate(0,0)} 20%{transform:translate(-2%,-2%)}
+    40%{transform:translate(2%,1%)}   60%{transform:translate(-1%,3%)}
+    80%{transform:translate(3%,-1%)}
+  }
+
+  /* Left panel */
+  .lp-left {
+    background:linear-gradient(160deg,#0f0826 0%,#1e0e3c 50%,#2d1b69 100%);
+    position:relative; overflow:hidden;
+  }
+  .lp-left::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,#3b1d78 30%,#7c6fa0 70%,transparent);
+    background-size:200% 100%; animation:lp-shimmer 3s linear infinite;
+  }
+
+  .lp-grain {
+    position:absolute; inset:-50%; width:200%; height:200%; pointer-events:none; z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.025; animation:lp-grain 9s steps(10) infinite;
+  }
+
+  /* Testimonial card */
+  .lp-testimonial {
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+    border-radius:20px; padding:24px; backdrop-filter:blur(8px);
+    transition:transform .3s, box-shadow .3s;
+  }
+  .lp-testimonial:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.25); }
+
+  /* Right panel */
+  .lp-right { background:#faf8ff; }
+
+  /* Tab switcher */
+  .lp-tabs {
+    display:flex; background:#f0edf8; border-radius:14px; padding:4px; margin-bottom:28px;
+    border:1px solid #e8e4f0;
+  }
+  .lp-tab {
+    flex:1; padding:10px; border-radius:10px; border:none; cursor:pointer;
+    font-family:'Cabinet Grotesk',sans-serif; font-size:13px; font-weight:700;
+    transition:all .2s;
+  }
+  .lp-tab-active {
+    background:#fff; color:#0f0826;
+    box-shadow:0 2px 8px rgba(30,14,60,.1), 0 1px 0 rgba(255,255,255,.8);
+  }
+  .lp-tab-inactive { background:transparent; color:#7c6fa0; }
+
+  /* Form card */
+  .lp-form-card {
+    background:#fff; border-radius:24px; padding:40px;
+    border:1px solid #d4cce8;
+    box-shadow:0 2px 0 #f0edf8, 0 20px 56px rgba(30,14,60,.09), 0 4px 16px rgba(0,0,0,.04);
+    width:100%; max-width:440px;
+    animation:lp-fadeIn .5s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  /* Social buttons */
+  .lp-social-btn {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px; border-radius:12px; border:1.5px solid #d4cce8; background:#fff;
+    font-family:'Cabinet Grotesk',sans-serif; font-size:13px; font-weight:700; color:#0f0826;
+    cursor:pointer; transition:all .2s;
+  }
+  .lp-social-btn:hover { background:#f8f6ff; border-color:#3b1d78; }
+
+  /* Input */
+  .lp-input {
+    width:100%; padding:12px 16px; border-radius:12px;
+    font-family:'Cabinet Grotesk',sans-serif; font-size:14px; color:#0f0826;
+    border:1.5px solid #d4cce8; background:#fff; outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .lp-input::placeholder { color:#c4b8e8; }
+  .lp-input:focus { border-color:#1e0e3c; box-shadow:0 0 0 3px rgba(30,14,60,.07); }
+  .lp-input-error { border-color:#f87171!important; }
+
+  /* Submit button */
+  .lp-submit-btn {
+    width:100%; padding:13px; border-radius:12px; border:none; cursor:pointer;
+    font-family:'Cabinet Grotesk',sans-serif; font-size:14px; font-weight:800; color:#e2d9f3;
+    background:linear-gradient(135deg,#0f0826,#1e0e3c 55%,#2d1b69);
+    box-shadow:0 4px 18px rgba(15,8,38,.28), inset 0 1px 0 rgba(255,255,255,.08);
+    transition:transform .2s, box-shadow .2s, opacity .2s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    position:relative; overflow:hidden;
+  }
+  .lp-submit-btn::before {
+    content:''; position:absolute; top:0; left:-90%; width:55%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+    transform:skewX(-15deg); transition:left .42s ease;
+  }
+  .lp-submit-btn:hover:not(:disabled)::before { left:140%; }
+  .lp-submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 28px rgba(15,8,38,.38)!important; }
+  .lp-submit-btn:disabled { opacity:.7; cursor:not-allowed; }
+
+  /* Forgot / switch links */
+  .lp-accent-link {
+    color:#1e0e3c; font-weight:700; font-size:12px; text-decoration:none;
+    transition:color .18s;
+  }
+  .lp-accent-link:hover { color:#3b1d78; }
+  .lp-switch-btn {
+    color:#1e0e3c; font-weight:800; font-size:14px; background:none; border:none; cursor:pointer;
+    transition:color .18s; padding:0;
+  }
+  .lp-switch-btn:hover { color:#3b1d78; }
+
+  /* Terms notice */
+  .lp-terms {
+    border-radius:12px; padding:12px 14px; font-size:12px; line-height:1.6;
+    background:#f8f6ff; border:1px solid #e8e4f0; color:#5a4f7a;
+  }
+
+  /* Divider */
+  .lp-divider {
+    display:flex; align-items:center; gap:12px; margin:18px 0;
+  }
+  .lp-divider-line { flex:1; height:1px; background:#e8e4f0; }
+  .lp-divider-text { font-size:12px; color:#7c6fa0; font-weight:500; white-space:nowrap; }
+`
+
 export default function LoginPage() {
   const { setView } = useNav()
 
-  const [tab, setTab]           = useState<'login' | 'signup'>('login')
+  const [tab, setTab]           = useState('login')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [name, setName]         = useState('')
   const [showPw, setShowPw]     = useState(false)
   const [loading, setLoading]   = useState(false)
-  const [errors, setErrors]     = useState<FormErrors>({})
+  const [errors, setErrors]     = useState({})
 
-  // ── Client-side validation ──
-  const validate = (): FormErrors => {
-    const e: FormErrors = {}
+  const validate = () => {
+    const e = {}
     if (!email)                            e.email    = 'Email is required'
     else if (!/\S+@\S+\.\S+/.test(email)) e.email    = 'Enter a valid email'
     if (!password)                         e.password = 'Password is required'
@@ -57,9 +187,8 @@ export default function LoginPage() {
     return e
   }
 
-  // ── Map backend field errors → FormErrors ──
-  const applyServerErrors = (err: ApiError) => {
-    const next: FormErrors = {}
+  const applyServerErrors = (err) => {
+    const next = {}
     if (err.errors) {
       if (err.errors.email)    next.email    = err.errors.email[0]
       if (err.errors.password) next.password = err.errors.password[0]
@@ -69,86 +198,86 @@ export default function LoginPage() {
     setErrors(next)
   }
 
-  // ── Submit ──
   const handleSubmit = async () => {
     const clientErrors = validate()
     if (Object.keys(clientErrors).length) { setErrors(clientErrors); return }
-
     setErrors({})
     setLoading(true)
-
     try {
       const res = tab === 'login'
         ? await authApi.login({ email, password })
         : await authApi.register({ name, email, password })
-
       tokenStorage.set(res.token)
-
       if (tab === 'login') {
-        setView('admin')                         // ← go to dashboard
+        setView('admin')
       } else {
-        setTab('login')                          // ← switch to login tab
-        setName('')
-        setEmail('')
-        setPassword('')
+        setTab('login'); setName(''); setEmail(''); setPassword('')
         setErrors({ global: '✅ Account created! Please log in.' })
       }
-
     } catch (err) {
-      applyServerErrors(err as ApiError)
+      applyServerErrors(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) handleSubmit()
-  }
-
-  const switchTab = (t: 'login' | 'signup') => { setTab(t); setErrors({}) }
+  const switchTab = (t) => { setTab(t); setErrors({}) }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="lp-root" style={{ minHeight:'100vh', display:'flex' }}>
+      <style>{css}</style>
 
       {/* ── Left branding panel ── */}
-      <div className="hidden lg:flex flex-col justify-center flex-1 px-16 py-16 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #15173D 0%, #2a2d5e 60%, #6e1a6e 100%)' }}>
+      <div className="lp-left" style={{ flex:1, display:'none', flexDirection:'column', justifyContent:'center', padding:'64px', position:'relative' }}
+        /* show on lg */ >
+        <style>{`.lp-left{display:none} @media(min-width:1024px){.lp-left{display:flex!important}}`}</style>
+        <div className="lp-grain" />
 
-        {([[-60, -60, 260], [260, 200, 180], [-40, 350, 120]] as number[][]).map(([x, y, r], i) => (
-          <div key={i} className="absolute rounded-full pointer-events-none"
-            style={{ left: x, top: y, width: r, height: r, border: '1px solid rgba(255,255,255,0.08)' }} />
+        {/* Decorative rings */}
+        {[[-60,-60,260],[260,200,180],[-40,350,120]].map(([x,y,r],i) => (
+          <div key={i} style={{
+            position:'absolute', left:x, top:y, width:r, height:r, borderRadius:'50%',
+            border:'1px solid rgba(255,255,255,.06)', pointerEvents:'none',
+          }} />
         ))}
 
-        <div className="flex items-center gap-3 cursor-pointer mb-16" onClick={() => setView('landing')}>
-          <LogoMark size={36} />
-          <span className="font-bold text-2xl" style={{ color: 'white', fontFamily: "'Syne', sans-serif" }}>
-            Founder<span style={{ color: '#c44ec4' }}>Match</span>
-          </span>
-        </div>
+        <div style={{ position:'relative', zIndex:1 }}>
+          {/* Logo */}
+          <div onClick={() => setView('landing')} style={{ display:'flex', alignItems:'center', gap:12, cursor:'pointer', marginBottom:64 }}>
+            <LogoMark size={38} />
+            <span style={{ fontFamily:'Cabinet Grotesk,sans-serif', fontWeight:900, fontSize:22, color:'#fff', letterSpacing:'-.02em' }}>
+              Founder<span style={{ color:'#7c6fa0' }}>Match</span>
+            </span>
+          </div>
 
-        <div className="max-w-sm">
-          <h2 className="font-extrabold text-5xl leading-tight text-white mb-5"
-            style={{ fontFamily: "'Syne', sans-serif" }}>
-            Your next<br />
-            <span style={{ color: '#c44ec4' }}>co-founder</span><br />
-            is waiting.
-          </h2>
-          <p className="text-base leading-relaxed mb-12" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            Join 2,400+ entrepreneurs who found their perfect co-founder through
-            structured compatibility testing.
-          </p>
-          <div className="rounded-2xl p-6"
-            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-            <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.85)' }}>
-              "FounderMatch didn't just connect us — it validated our compatibility
-              before we signed anything. 18 months in, still going strong."
+          {/* Headline */}
+          <div style={{ maxWidth:360, marginBottom:48 }}>
+            <h2 style={{ fontFamily:'Cabinet Grotesk,sans-serif', fontWeight:900, fontSize:'clamp(2.2rem,3.5vw,3rem)', lineHeight:1.05, color:'#fff', marginBottom:20, letterSpacing:'-.03em' }}>
+              Your next<br />
+              <span style={{ fontFamily:'Instrument Serif,serif', fontStyle:'italic', fontWeight:400, color:'#c4b8e8' }}>co-founder</span><br />
+              is waiting.
+            </h2>
+            <p style={{ fontSize:15, lineHeight:1.75, color:'rgba(226,217,243,.5)' }}>
+              Join 2,400+ entrepreneurs who found their perfect co-founder through structured compatibility testing.
             </p>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                style={{ background: 'linear-gradient(135deg, #982598, #c44ec4)' }}>P</div>
+          </div>
+
+          {/* Testimonial card */}
+          <div className="lp-testimonial">
+            <p style={{ fontSize:14, lineHeight:1.75, marginBottom:18, color:'rgba(226,217,243,.8)', fontStyle:'italic' }}>
+              "FounderMatch didn't just connect us — it validated our compatibility before we signed anything. 18 months in, still going strong."
+            </p>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{
+                width:38, height:38, borderRadius:11, flexShrink:0,
+                background:'linear-gradient(135deg,#1e0e3c,#3b1d78)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontWeight:800, fontSize:14, color:'#e2d9f3',
+                border:'1px solid rgba(255,255,255,.1)',
+              }}>P</div>
               <div>
-                <div className="text-white text-sm font-semibold">Priya Sharma</div>
-                <div className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>CEO, NovaTech · Bangalore</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#fff' }}>Priya Sharma</div>
+                <div style={{ fontSize:11, color:'rgba(226,217,243,.4)', marginTop:2 }}>CEO, NovaTech · Bangalore</div>
               </div>
             </div>
           </div>
@@ -156,169 +285,135 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right form panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
+      <div className="lp-right" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:32 }}>
 
         {/* Mobile logo */}
-        <div className="flex lg:hidden items-center gap-2 mb-8 cursor-pointer" onClick={() => setView('landing')}>
-          <LogoMark size={28} />
-          <span className="font-bold text-lg" style={{ color: '#15173D' }}>
-            Founder<span style={{ color: '#982598' }}>Match</span>
+        <div onClick={() => setView('landing')} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', marginBottom:28 }}
+          className="lp-mobile-logo">
+          <style>{`@media(min-width:1024px){.lp-mobile-logo{display:none!important}}`}</style>
+          <LogoMark size={30} />
+          <span style={{ fontFamily:'Cabinet Grotesk,sans-serif', fontWeight:900, fontSize:18, color:'#0f0826', letterSpacing:'-.02em' }}>
+            Founder<span style={{ color:'#3b1d78' }}>Match</span>
           </span>
         </div>
 
-        <div className="bg-white rounded-3xl w-full max-w-md p-10"
-          style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.1)' }}>
+        <div className="lp-form-card">
 
           {/* Tab switcher */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
-            {(['login', 'signup'] as const).map(t => (
-              <button key={t} onClick={() => switchTab(t)}
-                className="flex-1 py-2.5 rounded-[10px] text-sm font-semibold transition-all"
-                style={{
-                  background: tab === t ? 'white' : 'transparent',
-                  color: tab === t ? '#15173D' : '#6b7280',
-                  boxShadow: tab === t ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-                  border: 'none', cursor: 'pointer',
-                }}>
+          <div className="lp-tabs">
+            {['login','signup'].map(t => (
+              <button key={t} className={`lp-tab ${tab === t ? 'lp-tab-active' : 'lp-tab-inactive'}`}
+                onClick={() => switchTab(t)}>
                 {t === 'login' ? 'Log In' : 'Sign Up'}
               </button>
             ))}
           </div>
 
-          <h2 className="font-extrabold text-2xl mb-1" style={{ color: '#15173D', fontFamily: "'Syne',sans-serif" }}>
+          <h2 style={{ fontFamily:'Cabinet Grotesk,sans-serif', fontWeight:900, fontSize:'1.5rem', marginBottom:4, color:'#0f0826', letterSpacing:'-.02em' }}>
             {tab === 'login' ? 'Welcome back' : 'Create your account'}
           </h2>
-          <p className="text-sm text-gray-500 mb-7">
-            {tab === 'login'
-              ? 'Sign in to continue finding your co-founder'
-              : 'Start your co-founder journey for free'}
+          <p style={{ fontSize:13, color:'#7c6fa0', marginBottom:22 }}>
+            {tab === 'login' ? 'Sign in to continue finding your co-founder' : 'Start your co-founder journey for free'}
           </p>
 
-          {/* ── Global server error / success banner ── */}
+          {/* Global error/success banner */}
           {errors.global && (
-            <div className="flex items-start gap-2 rounded-xl px-4 py-3 mb-5 text-sm"
-              style={{
-                background: errors.global.startsWith('✅') ? '#f0fdf4' : '#fef2f2',
-                border: `1px solid ${errors.global.startsWith('✅') ? '#bbf7d0' : '#fecaca'}`,
-                color: errors.global.startsWith('✅') ? '#16a34a' : '#dc2626'
-              }}>
-              <span>{errors.global}</span>
+            <div style={{
+              display:'flex', alignItems:'flex-start', gap:8,
+              borderRadius:12, padding:'11px 14px', marginBottom:18, fontSize:13,
+              background: errors.global.startsWith('✅') ? '#f0fdf4' : '#fef8f8',
+              border: `1px solid ${errors.global.startsWith('✅') ? '#bbf7d0' : '#fecaca'}`,
+              color: errors.global.startsWith('✅') ? '#16a34a' : '#dc2626',
+            }}>
+              {errors.global}
             </div>
           )}
 
           {/* Social buttons */}
-          <div className="flex gap-3 mb-5">
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all">
-              <GoogleIcon /> Google
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all">
-              <LinkedInIcon /> LinkedIn
-            </button>
+          <div style={{ display:'flex', gap:10, marginBottom:18 }}>
+            <button className="lp-social-btn"><GoogleIcon /> Google</button>
+            <button className="lp-social-btn"><LinkedInIcon /> LinkedIn</button>
           </div>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">or continue with email</span>
-            <div className="flex-1 h-px bg-gray-200" />
+          <div className="lp-divider">
+            <div className="lp-divider-line" />
+            <span className="lp-divider-text">or continue with email</span>
+            <div className="lp-divider-line" />
           </div>
 
-          {/* ── Form fields ── */}
-          <div className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
+          {/* Form fields */}
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
             {tab === 'signup' && (
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: '#15173D' }}>Full Name</label>
-                <input
-                  className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
-                  style={{ borderColor: errors.name ? '#f87171' : '#e5e7eb' }}
-                  placeholder="e.g. Rahul Mehta"
-                  value={name}
+                <label style={{ display:'block', fontSize:13, fontWeight:700, color:'#0f0826', marginBottom:7 }}>Full Name</label>
+                <input className={`lp-input ${errors.name ? 'lp-input-error' : ''}`}
+                  placeholder="e.g. Rahul Mehta" value={name}
                   onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })) }}
                 />
-                {errors.name && <p className="text-red-500 text-xs mt-1">⚠ {errors.name}</p>}
+                {errors.name && <p style={{ color:'#dc2626', fontSize:11, marginTop:5, fontWeight:600 }}>⚠ {errors.name}</p>}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: '#15173D' }}>Email Address</label>
-              <input
-                type="email"
-                className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
-                style={{ borderColor: errors.email ? '#f87171' : '#e5e7eb' }}
-                placeholder="you@startup.com"
-                value={email}
+              <label style={{ display:'block', fontSize:13, fontWeight:700, color:'#0f0826', marginBottom:7 }}>Email Address</label>
+              <input className={`lp-input ${errors.email ? 'lp-input-error' : ''}`}
+                type="email" placeholder="you@startup.com" value={email}
                 onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: undefined, global: undefined })) }}
               />
-              {errors.email && <p className="text-red-500 text-xs mt-1">⚠ {errors.email}</p>}
+              {errors.email && <p style={{ color:'#dc2626', fontSize:11, marginTop:5, fontWeight:600 }}>⚠ {errors.email}</p>}
             </div>
 
             <div>
-              <div className="flex justify-between mb-1.5">
-                <label className="text-sm font-medium" style={{ color: '#15173D' }}>Password</label>
-                {tab === 'login' && (
-                  <a href="#" className="text-xs font-medium" style={{ color: '#982598' }}>Forgot password?</a>
-                )}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
+                <label style={{ fontSize:13, fontWeight:700, color:'#0f0826' }}>Password</label>
+                {tab === 'login' && <a href="#" className="lp-accent-link">Forgot password?</a>}
               </div>
-              <div className="relative">
-                <input
+              <div style={{ position:'relative' }}>
+                <input className={`lp-input ${errors.password ? 'lp-input-error' : ''}`}
+                  style={{ paddingRight:64 }}
                   type={showPw ? 'text' : 'password'}
-                  className="w-full px-4 py-3 pr-16 rounded-xl border text-sm outline-none transition-all focus:ring-2 focus:ring-purple-100"
-                  style={{ borderColor: errors.password ? '#f87171' : '#e5e7eb' }}
                   placeholder={tab === 'login' ? 'Enter your password' : 'Min. 6 characters'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); setErrors(p => ({ ...p, password: undefined, global: undefined })) }}
+                  onKeyDown={e => { if (e.key === 'Enter' && !loading) handleSubmit() }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
-                >
+                <button type="button" onClick={() => setShowPw(!showPw)} style={{
+                  position:'absolute', right:14, top:'50%', transform:'translateY(-50%)',
+                  fontSize:11, fontWeight:700, color:'#7c6fa0', background:'none', border:'none', cursor:'pointer',
+                }}>
                   {showPw ? 'Hide' : 'Show'}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">⚠ {errors.password}</p>}
+              {errors.password && <p style={{ color:'#dc2626', fontSize:11, marginTop:5, fontWeight:600 }}>⚠ {errors.password}</p>}
             </div>
 
             {tab === 'signup' && (
-              <div className="rounded-xl p-3 text-xs leading-relaxed"
-                style={{ background: '#fdf4ff', border: '1px solid #f0d0f0', color: '#6e1a6e' }}>
+              <div className="lp-terms">
                 🔒 By signing up, you agree to our{' '}
-                <a href="#" style={{ color: '#982598', fontWeight: 600 }}>Terms</a> and{' '}
-                <a href="#" style={{ color: '#982598', fontWeight: 600 }}>Privacy Policy</a>
+                <a href="#" className="lp-accent-link">Terms</a> and{' '}
+                <a href="#" className="lp-accent-link">Privacy Policy</a>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all mt-1 flex items-center justify-center gap-2"
-              style={{ background: '#982598', opacity: loading ? 0.8 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-            >
-              {loading
-                ? <>
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    {tab === 'login' ? 'Signing in…' : 'Creating account…'}
-                  </>
-                : tab === 'login' ? 'Sign In →' : 'Create Account →'
-              }
+            <button className="lp-submit-btn" onClick={handleSubmit} disabled={loading} style={{ marginTop:4 }}>
+              {loading ? (
+                <>
+                  <span style={{ width:16, height:16, border:'2px solid rgba(226,217,243,.3)', borderTopColor:'#e2d9f3', borderRadius:'50%', animation:'lp-spin .7s linear infinite', flexShrink:0 }} />
+                  {tab === 'login' ? 'Signing in…' : 'Creating account…'}
+                </>
+              ) : (
+                tab === 'login' ? 'Sign In →' : 'Create Account →'
+              )}
             </button>
           </div>
 
           {/* Switch tab */}
-          <p className="text-center mt-6 text-sm text-gray-500">
+          <p style={{ textAlign:'center', marginTop:22, fontSize:14, color:'#7c6fa0' }}>
             {tab === 'login'
-              ? <>Don't have an account?{' '}
-                  <button onClick={() => switchTab('signup')}
-                    className="font-semibold bg-transparent border-none cursor-pointer text-sm"
-                    style={{ color: '#982598' }}>Sign up free</button>
-                </>
-              : <>Already have an account?{' '}
-                  <button onClick={() => switchTab('login')}
-                    className="font-semibold bg-transparent border-none cursor-pointer text-sm"
-                    style={{ color: '#982598' }}>Log in</button>
-                </>
+              ? <>Don't have an account?{' '}<button className="lp-switch-btn" onClick={() => switchTab('signup')}>Sign up free</button></>
+              : <>Already have an account?{' '}<button className="lp-switch-btn" onClick={() => switchTab('login')}>Log in</button></>
             }
           </p>
         </div>
