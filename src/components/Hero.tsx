@@ -1,3 +1,37 @@
+import type { FC, ElementType } from 'react'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
+import GroupsIcon from '@mui/icons-material/Groups'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import StarRateIcon from '@mui/icons-material/StarRate'
+import VerifiedIcon from '@mui/icons-material/Verified'
+import type { SvgIconProps } from '@mui/material'
+
+interface StatItem {
+  Icon: ElementType<SvgIconProps>
+  value: string
+  label: string
+}
+
+interface BarItem {
+  label: string
+  pct: number
+  delay: string
+}
+
+const stats: StatItem[] = [
+  { Icon: GroupsIcon,     value: '2,400+', label: 'Founders Matched' },
+  { Icon: TrendingUpIcon, value: '78%',    label: 'Partnership Success' },
+  { Icon: StarRateIcon,   value: '4.9/5',  label: 'Founder Rating' },
+]
+
+const bars: BarItem[] = [
+  { label: 'Vision Alignment', pct: 96, delay: '0.8s' },
+  { label: 'Work Style',        pct: 88, delay: '1.0s' },
+  { label: 'Risk Tolerance',    pct: 92, delay: '1.2s' },
+]
+
+const Hero: FC = () => {
 import { useEffect, useRef, useState } from 'react'
 
 /* ─────────────────────────────────────────
@@ -412,6 +446,138 @@ export default function Hero() {
   ]
 
   return (
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-10px); }
+        }
+        @keyframes floatDelay {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-7px); }
+        }
+        @keyframes progressIn {
+          from { width: 0; }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseRing {
+          0%   { transform: scale(1);   opacity: 0.6; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes grain {
+          0%,100% { transform: translate(0,0); }
+          10%  { transform: translate(-2%, -3%); }
+          20%  { transform: translate(3%, 1%); }
+          30%  { transform: translate(-1%, 4%); }
+          40%  { transform: translate(4%, -2%); }
+          50%  { transform: translate(-3%, 3%); }
+          60%  { transform: translate(2%, -4%); }
+          70%  { transform: translate(-4%, 1%); }
+          80%  { transform: translate(1%, 3%); }
+          90%  { transform: translate(3%, -1%); }
+        }
+        .hero-float       { animation: float 6s ease-in-out infinite; }
+        .hero-float-delay { animation: floatDelay 6s ease-in-out infinite 1.5s; }
+        .hero-fade-1 { animation: fadeUp 0.7s ease both 0.1s; }
+        .hero-fade-2 { animation: fadeUp 0.7s ease both 0.2s; }
+        .hero-fade-3 { animation: fadeUp 0.7s ease both 0.35s; }
+        .hero-fade-4 { animation: fadeUp 0.7s ease both 0.5s; }
+        .hero-fade-5 { animation: fadeUp 0.7s ease both 0.65s; }
+        .hero-card-anim { animation: fadeUp 0.8s ease both 0.3s; }
+        .progress-bar { animation: progressIn 1.4s cubic-bezier(.4,0,.2,1) both; }
+        .grad-text {
+          background: linear-gradient(135deg, #982598 0%, #c040c0 50%, #e060e0 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .noise-overlay::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          opacity: 0.4;
+          animation: grain 8s steps(1) infinite;
+        }
+        .badge-ping::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: #22c55e;
+          animation: pulseRing 1.5s ease-out infinite;
+        }
+        .stat-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(152,37,152,0.12);
+        }
+        .primary-btn {
+          transition: all 0.2s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .primary-btn::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: white;
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+        .primary-btn:hover::after { opacity: 0.08; }
+        .primary-btn:active { transform: scale(0.98); }
+        .secondary-btn { transition: all 0.2s ease; }
+        .secondary-btn:hover {
+          background: rgba(152,37,152,0.04);
+          border-color: rgba(152,37,152,0.3) !important;
+        }
+        .mesh-blob-1 {
+          background: radial-gradient(ellipse at 70% 50%, rgba(152,37,152,0.12) 0%, transparent 65%);
+        }
+        .mesh-blob-2 {
+          background: radial-gradient(ellipse at 20% 80%, rgba(21,23,61,0.07) 0%, transparent 55%);
+        }
+        .mesh-blob-3 {
+          background: radial-gradient(ellipse at 90% 10%, rgba(192,64,192,0.08) 0%, transparent 50%);
+        }
+        .connect-btn { transition: all 0.2s; }
+        .connect-btn:hover {
+          background: #7d1e7d !important;
+          box-shadow: 0 4px 20px rgba(152,37,152,0.4);
+        }
+      `}</style>
+
+      <section className="noise-overlay relative w-full min-h-screen flex items-center bg-white pt-[60px] overflow-hidden">
+
+        {/* Full-bleed decorative mesh */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 mesh-blob-1" />
+          <div className="absolute inset-0 mesh-blob-2" />
+          <div className="absolute inset-0 mesh-blob-3" />
+          <div
+            className="absolute top-1/3 left-0 w-full h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(152,37,152,0.06), transparent)' }}
+          />
+          <div
+            className="absolute bottom-1/4 left-0 w-full h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(21,23,61,0.04), transparent)' }}
+          />
+          <div
+            className="absolute top-20 right-0 w-[700px] h-[700px] rounded-full opacity-[0.07]"
+            style={{ background: '#982598', filter: 'blur(100px)', transform: 'translateX(40%)' }}
+          />
+          <div
+            className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full opacity-[0.05]"
+            style={{ background: '#15173D', filter: 'blur(80px)' }}
+          />
+        </div>
     <section className="hr" style={{
       position: 'relative', minHeight: '100vh',
       display: 'flex', alignItems: 'center',
@@ -449,10 +615,31 @@ export default function Hero() {
         {['sk1','sk2','sk3','sk4','sk5'].map(c => <div key={c} className={`spk ${c}`} />)}
       </div>
 
+        {/* Content — full width, generous edge padding, NO max-width cap */}
+        <div className="relative w-full px-6 sm:px-10 lg:px-16 xl:px-24 py-20 lg:py-28">
+          <div className="grid lg:grid-cols-[1fr_auto] xl:grid-cols-[1fr_520px] gap-12 xl:gap-20 items-center">
       {/* Content */}
       <div style={{ position: 'relative', maxWidth: 1300, margin: '0 auto', padding: '96px 32px', width: '100%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
 
+            {/* ── Left ── */}
+            <div className="max-w-[680px]">
+
+              {/* Beta badge */}
+              <div
+                className="hero-fade-1 inline-flex items-center gap-2.5 px-4 py-2 rounded-full mb-8 border text-xs font-bold tracking-wide uppercase"
+                style={{
+                  borderColor: 'rgba(152,37,152,0.2)',
+                  background: 'rgba(152,37,152,0.05)',
+                  color: '#982598',
+                }}
+              >
+                <span className="relative w-2 h-2 flex-shrink-0">
+                  <span className="badge-ping absolute inset-0 rounded-full bg-green-500" />
+                  <span className="relative block w-2 h-2 rounded-full bg-green-500" />
+                </span>
+                Now in Beta · Free to Join
+              </div>
           {/* ══ LEFT ══ */}
           <div>
             {/* Badge */}
@@ -463,6 +650,18 @@ export default function Hero() {
               Now in Beta · Free to Join
             </div>
 
+              <h1
+                className="hero-fade-2 font-extrabold leading-[1.06] tracking-[-0.03em] mb-6"
+                style={{
+                  color: '#15173D',
+                  fontSize: 'clamp(2.6rem, 5vw, 4.2rem)',
+                }}
+              >
+                Find the{' '}
+                <span className="grad-text">Right Co-Founder</span>,{' '}
+                <br className="hidden sm:block" />
+                Not Just Any Co-Founder
+              </h1>
             {/* Headline */}
             <h1 className="fu d2" style={{
               fontSize: 'clamp(2.8rem,5vw,4rem)', fontWeight: 900,
@@ -474,6 +673,13 @@ export default function Hero() {
               <span style={{ color: '#7c6fa0', fontWeight: 400, fontSize: '0.87em' }}>not just any co&#8209;founder</span>
             </h1>
 
+              <p
+                className="hero-fade-3 text-gray-500 leading-relaxed mb-10"
+                style={{ fontSize: 'clamp(1rem, 1.6vw, 1.15rem)', maxWidth: '540px' }}
+              >
+                FounderMatch helps entrepreneurs discover compatible co-founders using a structured
+                compatibility test, a 90-day collaboration sprint, and a legal partnership framework.
+              </p>
             {/* Eyebrow */}
             <div className="fu d3" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
               <div style={{ height: 2, width: 28, borderRadius: 2, flexShrink: 0, background: 'linear-gradient(90deg,#1e0e3c,transparent)' }} />
@@ -487,6 +693,27 @@ export default function Hero() {
               FounderMatch helps entrepreneurs discover compatible co-founders using a structured compatibility test, a 90-day collaboration sprint, and a legal partnership framework.
             </p>
 
+              {/* CTAs */}
+              <div className="hero-fade-4 flex flex-wrap gap-3 mb-14">
+                <a
+                  href="#pricing"
+                  className="primary-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-bold text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #982598 0%, #b535b5 100%)',
+                    boxShadow: '0 4px 20px rgba(152,37,152,0.32), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  }}
+                >
+                  Start Free <ArrowForwardIcon sx={{ fontSize: 16 }} />
+                </a>
+                <a
+                  href="#quiz"
+                  className="secondary-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold border bg-white"
+                  style={{ color: '#15173D', borderColor: '#e5e7eb' }}
+                >
+                  <PlayCircleOutlineIcon sx={{ fontSize: 17, color: '#982598' }} />
+                  Take Compatibility Test
+                </a>
+              </div>
             {/* Chips */}
             <div className="fu d4" style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 32 }}>
               <Chip accent>AI Matching</Chip>
@@ -527,6 +754,34 @@ export default function Hero() {
             </div>
           </div>
 
+            {/* ── Right card ── */}
+            <div className="hero-card-anim hidden lg:flex items-center justify-center">
+              <div className="relative w-[380px] xl:w-[440px]">
+
+                {/* Glow behind card */}
+                <div
+                  className="absolute inset-[-20px] rounded-3xl"
+                  style={{
+                    background: 'radial-gradient(ellipse at center, rgba(152,37,152,0.13) 0%, transparent 70%)',
+                    filter: 'blur(20px)',
+                  }}
+                />
+
+                {/* Main card */}
+                <div
+                  className="hero-float relative bg-white rounded-2xl border border-gray-100 p-7"
+                  style={{ boxShadow: '0 20px 60px rgba(21,23,61,0.12), 0 4px 16px rgba(152,37,152,0.08)' }}
+                >
+                  {/* Top label */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="text-[11px] font-bold tracking-widest uppercase text-gray-400">Top Match</div>
+                    <div
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                      style={{ background: 'rgba(152,37,152,0.08)', color: '#982598' }}
+                    >
+                      <VerifiedIcon sx={{ fontSize: 11 }} /> 94% Compatible
+                    </div>
+                  </div>
           {/* ══ RIGHT ══ */}
           <div className="fi d3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ position: 'relative', width: '100%', maxWidth: 420 }}>
@@ -583,6 +838,50 @@ export default function Hero() {
                     ))}
                   </div>
 
+                  {/* Profile */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #982598, #15173D)' }}
+                    >
+                      A
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-[15px] truncate" style={{ color: '#15173D' }}>Alex Chen</div>
+                      <div className="text-[12px] text-gray-400 font-medium">CTO · Fintech · Mumbai</div>
+                    </div>
+                  </div>
+
+                  {/* Compatibility bars */}
+                  <div className="space-y-3.5 mb-6">
+                    {bars.map(({ label, pct, delay }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-[12px] mb-1.5">
+                          <span className="text-gray-500 font-medium">{label}</span>
+                          <span className="font-bold" style={{ color: '#982598' }}>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(152,37,152,0.08)' }}>
+                          <div
+                            className="progress-bar h-full rounded-full"
+                            style={{
+                              width: `${pct}%`,
+                              background: 'linear-gradient(90deg, #982598, #c040c0)',
+                              animationDelay: delay,
+                              animationDuration: '1.2s',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    className="connect-btn w-full py-3 rounded-xl text-[13.5px] font-bold text-white"
+                    style={{ background: '#982598', boxShadow: '0 2px 12px rgba(152,37,152,0.25)' }}
+                  >
+                    Connect with Alex →
+                  </button>
+                </div>
                   {/* Progress bars */}
                   {[
                     { label: 'Vision Alignment', pct: 96, cls: 'bf1', d: '1.1s, 2s' },
@@ -625,6 +924,19 @@ export default function Hero() {
                 </div>
               </div>
 
+                {/* Floating pill — top left */}
+                <div
+                  className="hero-float-delay absolute -top-5 -left-8 bg-white rounded-xl border border-gray-100 px-3.5 py-2.5"
+                  style={{ boxShadow: '0 8px 32px rgba(21,23,61,0.10)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[18px]">🎯</span>
+                    <div>
+                      <div className="text-[12px] font-bold" style={{ color: '#15173D' }}>Compatible Match</div>
+                      <div className="text-[11px] text-gray-400">Sprint started</div>
+                    </div>
+                  </div>
+                </div>
               {/* Pill A */}
               <div className="pill-a">
                 <div className="pill-box">
@@ -636,6 +948,28 @@ export default function Hero() {
                 </div>
               </div>
 
+                {/* Floating pill — bottom right */}
+                <div
+                  className="hero-float absolute -bottom-5 -right-8 bg-white rounded-xl border border-gray-100 px-3.5 py-2.5"
+                  style={{ boxShadow: '0 8px 32px rgba(21,23,61,0.10)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[18px]">⚖️</span>
+                    <div>
+                      <div className="text-[12px] font-bold" style={{ color: '#15173D' }}>Partnership Formed</div>
+                      <div className="text-[11px] text-gray-400">Docs signed</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Small badge — mid right */}
+                <div
+                  className="hero-float absolute top-1/2 -right-10 -translate-y-1/2 bg-white rounded-xl border border-gray-100 px-3 py-2"
+                  style={{ boxShadow: '0 4px 16px rgba(21,23,61,0.08)', animationDelay: '2s' }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[14px]">✨</span>
+                    <div className="text-[11px] font-bold" style={{ color: '#982598' }}>94% match</div>
               {/* Pill B */}
               <div className="pill-b">
                 <div className="pill-box">
@@ -645,13 +979,22 @@ export default function Hero() {
                     <div style={{ fontSize: 11, color: '#7c6fa0', marginTop: 1 }}>Docs signed</div>
                   </div>
                 </div>
+
               </div>
 
             </div>
-          </div>
 
+          </div>
         </div>
-      </div>
-    </section>
+
+        {/* Full-width bottom decorative band */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(152,37,152,0.12) 30%, rgba(152,37,152,0.12) 70%, transparent 100%)' }}
+        />
+      </section>
+    </>
   )
 }
+
+export default Hero
